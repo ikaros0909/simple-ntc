@@ -16,10 +16,10 @@ def define_argparser():
     '''
     p = argparse.ArgumentParser()
 
-    p.add_argument('--model_fn', required=True)
+    p.add_argument('--model_fn', required=True) #저장이 되어있는 모델파일
     p.add_argument('--gpu_id', type=int, default=-1)
-    p.add_argument('--batch_size', type=int, default=256)
-    p.add_argument('--top_k', type=int, default=1)
+    p.add_argument('--batch_size', type=int, default=256) #추론을 위한 batch size는 좀더 커도됨.
+    p.add_argument('--top_k', type=int, default=1) #top 몇개까지 출력할건지
 
     config = p.parse_args()
 
@@ -72,18 +72,18 @@ def main(config):
         for idx in range(0, len(lines), config.batch_size):
             mini_batch = tokenizer(
                 lines[idx:idx + config.batch_size],
-                padding=True,
-                truncation=True,
+                padding=True, #가장 긴것 기준으로 padding
+                truncation=True, #maxlength 기준으로 잘라줌
                 return_tensors="pt",
             )
 
-            x = mini_batch['input_ids']
+            x = mini_batch['input_ids'] #word idx의 tensor가 나옴
             x = x.to(device)
-            mask = mini_batch['attention_mask']
+            mask = mini_batch['attention_mask'] #padding이 된곳에는 attention이 되면 안됨
             mask = mask.to(device)
 
             # Take feed-forward
-            y_hat = F.softmax(model(x, attention_mask=mask).logits, dim=-1)
+            y_hat = F.softmax(model(x, attention_mask=mask).logits, dim=-1) #.logits 는 softmax직전의 hidden state weght
 
             y_hats += [y_hat]
         # Concatenate the mini-batch wise result

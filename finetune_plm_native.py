@@ -32,20 +32,20 @@ def define_argparser():
     p.add_argument('--use_albert', action='store_true')
     
     p.add_argument('--gpu_id', type=int, default=-1)
-    p.add_argument('--verbose', type=int, default=2)
+    p.add_argument('--verbose', type=int, default=2) #숫자가 높을수록 자세히 보여줌
 
-    p.add_argument('--batch_size', type=int, default=32)
+    p.add_argument('--batch_size', type=int, default=32) #2080ti기준 : batchsize 11기가 80=>64=>48 
     p.add_argument('--n_epochs', type=int, default=5)
 
     p.add_argument('--lr', type=float, default=5e-5)
-    p.add_argument('--warmup_ratio', type=float, default=.2)
+    p.add_argument('--warmup_ratio', type=float, default=.2) #Adam만 쓰면 학습이 잘 안됨.Adam을 쓰면서 warmup하는 방법, 
     p.add_argument('--adam_epsilon', type=float, default=1e-8)
     # If you want to use RAdam, I recommend to use LR=1e-4.
     # Also, you can set warmup_ratio=0.
     p.add_argument('--use_radam', action='store_true')
     p.add_argument('--valid_ratio', type=float, default=.2)
 
-    p.add_argument('--max_length', type=int, default=100)
+    p.add_argument('--max_length', type=int, default=100) #max_length 늘리면 batchsize 줄여야함.
 
     config = p.parse_args()
 
@@ -180,6 +180,7 @@ def main(config):
         'tokenizer': tokenizer,
     }, config.model_fn)
 
+#python finetune_plm_native.py --model_fn ./models/review.native.kcbert.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train.tsv --gpu_id 0 --batch_size 42 --n_epochs 2 --pretrained_model_name 'beomi/kcbert-base'
 if __name__ == '__main__':
     config = define_argparser()
     main(config)
