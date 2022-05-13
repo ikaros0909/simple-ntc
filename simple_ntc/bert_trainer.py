@@ -1,6 +1,7 @@
 import torch
 import torch.nn.utils as torch_utils
 
+# conda install ignite -c pytorch
 from ignite.engine import Events
 
 from simple_ntc.utils import get_grad_norm, get_parameter_norm

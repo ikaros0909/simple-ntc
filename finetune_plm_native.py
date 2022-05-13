@@ -1,23 +1,26 @@
 import argparse
 import random
 
+# conda install pytorch torchvision torchaudio cpuonly -c pytorch
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
+# conda install -c huggingface transformers
 from transformers import BertTokenizerFast
 from transformers import BertForSequenceClassification, AlbertForSequenceClassification
 from transformers import AdamW
 from transformers import get_linear_schedule_with_warmup
 
+# conda install -c conda-forge torch-optimizer
 import torch_optimizer as custom_optim
 
 from simple_ntc.bert_trainer import BertTrainer as Trainer
 from simple_ntc.bert_dataset import TextClassificationDataset, TextClassificationCollator
 from simple_ntc.utils import read_text
 
-
+# python .\finetune_plm_native.py --model_fn ./models/review.native.kcbert.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train.tsv --gpu_id 0 --batch_size 80 --n_epochs 2 --pretrained_model_name 'beomi/kcbert-base'
 def define_argparser():
     p = argparse.ArgumentParser()
 

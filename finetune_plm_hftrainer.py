@@ -14,7 +14,7 @@ from simple_ntc.bert_dataset import TextClassificationCollator
 from simple_ntc.bert_dataset import TextClassificationDataset
 from simple_ntc.utils import read_text
 
-
+# python .\finetune_plm_hftrainer.py --model_fn ./models/review.native.kcbert.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train.tsv --gpu_id 0 --batch_size 80 --n_epochs 2 --pretrained_model_name 'beomi/kcbert-base'
 def define_argparser():
     p = argparse.ArgumentParser()
 
