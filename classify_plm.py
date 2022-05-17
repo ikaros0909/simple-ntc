@@ -1,5 +1,7 @@
 import sys
 import argparse
+import random
+from sympy import li
 
 import torch
 import torch.nn as nn
@@ -9,7 +11,9 @@ from torchtext import data
 from transformers import BertTokenizerFast
 from transformers import BertForSequenceClassification, AlbertForSequenceClassification
 
+from torch.utils.data import DataLoader
 
+# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --gpu_id 0 --top_n=10
 def define_argparser():
     '''
     Define argument parser to take inference using pre-trained model.
@@ -20,22 +24,36 @@ def define_argparser():
     p.add_argument('--gpu_id', type=int, default=-1)
     p.add_argument('--batch_size', type=int, default=256) #추론을 위한 batch size는 좀더 커도됨.
     p.add_argument('--top_k', type=int, default=1) #top 몇개까지 출력할건지
+    p.add_argument('--top_n', type=int, default=1) #top 몇개까지 데이터를 입력받을건지
 
     config = p.parse_args()
 
     return config
 
 
-def read_text():
+def read_text(top_n):
     '''
     Read text from standard input for inference.
     '''
     lines = []
 
-    for line in sys.stdin:
+    # print('코멘트수 : '+str(top_n))
+    file = ".\\data\\test.tsv"
+    data = open(file, mode='r')
+
+    # for i, line in enumerate(random.shuffle(data[0].split('\n'))):
+    for i, line in enumerate(data):
         if line.strip() != '':
             lines += [line.strip()]
+            if i >= int(top_n) - 1:
+                break
 
+    data.close()
+
+    # for line in sys.stdin:
+    #     if line.strip() != '':
+    #         lines += [line.strip()]
+    
     return lines
 
 
@@ -49,7 +67,7 @@ def main(config):
     bert_best = saved_data['bert']
     index_to_label = saved_data['classes']
 
-    lines = read_text()
+    lines = read_text(config.top_n)
 
     with torch.no_grad():
         # Declare model and load pre-trained weights.

@@ -2,6 +2,8 @@ import argparse
 import random
 
 # conda install pytorch torchvision torchaudio cpuonly -c pytorch
+# conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -21,6 +23,8 @@ from simple_ntc.bert_dataset import TextClassificationDataset, TextClassificatio
 from simple_ntc.utils import read_text
 
 # python .\finetune_plm_native.py --model_fn ./models/review.native.kcbert.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train.tsv --gpu_id 0 --batch_size 80 --n_epochs 2 --pretrained_model_name 'beomi/kcbert-base'
+# cat .\data\test.tsv | python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --gpu_id 0
+# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --gpu_id 0
 def define_argparser():
     p = argparse.ArgumentParser()
 
@@ -37,10 +41,10 @@ def define_argparser():
     p.add_argument('--gpu_id', type=int, default=-1)
     p.add_argument('--verbose', type=int, default=2) #숫자가 높을수록 자세히 보여줌
 
-    p.add_argument('--batch_size', type=int, default=32) #2080ti기준 : batchsize 11기가 80=>64=>48 
+    p.add_argument('--batch_size', type=int, default=80) #2080ti기준 : batchsize 11기가 80=>64=>48=>32
     p.add_argument('--n_epochs', type=int, default=5)
 
-    p.add_argument('--lr', type=float, default=5e-5)
+    p.add_argument('--lr', type=float, default=5e-5) #running rate
     p.add_argument('--warmup_ratio', type=float, default=.2) #Adam만 쓰면 학습이 잘 안됨.Adam을 쓰면서 warmup하는 방법, 
     p.add_argument('--adam_epsilon', type=float, default=1e-8)
     # If you want to use RAdam, I recommend to use LR=1e-4.
