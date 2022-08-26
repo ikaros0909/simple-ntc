@@ -13,7 +13,8 @@ from transformers import BertForSequenceClassification, AlbertForSequenceClassif
 
 from torch.utils.data import DataLoader
 
-# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --gpu_id 0 --top_n=10
+# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --test_file .\data\test.tsv --gpu_id 0 --top_n=10
+# python .\classify_plm.py --model_fn .\models\y.native.kcbert.pth --test_file .\data\y_test.tsv --gpu_id 0 --top_n=10
 def define_argparser():
     '''
     Define argument parser to take inference using pre-trained model.
@@ -21,6 +22,7 @@ def define_argparser():
     p = argparse.ArgumentParser()
 
     p.add_argument('--model_fn', required=True) #저장이 되어있는 모델파일
+    p.add_argument('--test_file', required=True) #test 파일.
     p.add_argument('--gpu_id', type=int, default=-1)
     p.add_argument('--batch_size', type=int, default=256) #추론을 위한 batch size는 좀더 커도됨.
     p.add_argument('--top_k', type=int, default=1) #top 몇개까지 출력할건지
@@ -38,7 +40,8 @@ def read_text(top_n):
     lines = []
 
     # print('코멘트수 : '+str(top_n))
-    file = ".\\data\\test.tsv"
+    # file = ".\\data\\test.tsv"
+    file = config.test_file
     data = open(file, mode='r')
 
     # for i, line in enumerate(random.shuffle(data[0].split('\n'))):

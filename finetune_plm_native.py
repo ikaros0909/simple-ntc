@@ -22,9 +22,11 @@ from simple_ntc.bert_trainer import BertTrainer as Trainer
 from simple_ntc.bert_dataset import TextClassificationDataset, TextClassificationCollator
 from simple_ntc.utils import read_text
 
-# python .\finetune_plm_native.py --model_fn ./models/review.native.kcbert.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train.tsv --gpu_id 0 --batch_size 80 --n_epochs 2 --pretrained_model_name 'beomi/kcbert-base'
+# python .\finetune_plm_native.py --model_fn ./models/review.native.kcbert.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train.tsv --gpu_id 0 --batch_size 80 --n_epochs 5 --pretrained_model_name 'beomi/kcbert-base'
 # cat .\data\test.tsv | python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --gpu_id 0
 # python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --gpu_id 0
+
+# python .\finetune_plm_native.py --model_fn ./models/y.native.kcbert.pth --train_fn ./data/y_train.tsv --gpu_id 0 --batch_size 80 --n_epochs 5 --pretrained_model_name 'beomi/kcbert-base'
 def define_argparser():
     p = argparse.ArgumentParser()
 
