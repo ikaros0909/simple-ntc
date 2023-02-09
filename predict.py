@@ -1,5 +1,6 @@
 import sys
 import argparse
+import json
 import random
 from sympy import li
 
@@ -71,6 +72,13 @@ def main(config):
     index_to_label = saved_data['classes']
 
     lines = read_text(config.top_n)
+    
+    return_data = {}
+    return_data['prediction'] = []
+
+    prediction_data = {}
+
+    # return_lines = {}
 
     with torch.no_grad():
         # Declare model and load pre-trained weights.
@@ -90,7 +98,7 @@ def main(config):
         model.eval()
 
         y_hats = []
-        y_logits = []
+        # y_logits = []
         for idx in range(0, len(lines), config.batch_size):
             mini_batch = tokenizer(
                 lines[idx:idx + config.batch_size],
@@ -120,12 +128,26 @@ def main(config):
         # |indice| = (len(lines), top_k)
 
         for i in range(len(lines)):
-            sys.stdout.write('%s\t%s\t%s\n' % (
-                ' '.join([str(format(probs[i].item(), '2f'))]), 
-                ' '.join([index_to_label[int(indice[i][j])] for j in range(config.top_k)]), 
-                lines[i]
-            ))
+            prediction_data['prob'] = str(format(probs[i].item(), '2f'))
+            prediction_data['label'] = [index_to_label[int(indice[i][j])] for j in range(config.top_k)],
+            prediction_data['sentence'] = lines[i]
+            return_data['prediction'].append(prediction_data)
 
+            # return_lines.append('%s\t%s\t%s\n' % (
+            #     ' '.join([str(format(probs[i].item(), '2f'))]),
+            #     ' '.join([str(index_to_label[int(indice[i][j])]) for j in range(config.top_k)]),
+            #     str(lines[i])
+            #     )
+            # )
+            
+            # sys.stdout.write('%s\t%s\t%s\n' % (
+            #     ' '.join([str(format(probs[i].item(), '2f'))]), 
+            #     ' '.join([index_to_label[int(indice[i][j])] for j in range(config.top_k)]), 
+            #     lines[i]
+            # ))
+    sys.stdout.write(str(return_data))
+    return return_data
+    # return str("return_lines")
 
 if __name__ == '__main__':
     config = define_argparser()
