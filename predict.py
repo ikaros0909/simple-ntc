@@ -20,10 +20,9 @@ def define_argparser():
     '''
     Define argument parser to take inference using pre-trained model.
     '''
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser() #인자를 받기위한 객체 생성
 
     p.add_argument('--model_fn', required=True) #저장이 되어있는 모델파일
-    p.add_argument('--test_file', required=True) #test 파일.
     p.add_argument('--gpu_id', type=int, default=-1)
     p.add_argument('--batch_size', type=int, default=256) #추론을 위한 batch size는 좀더 커도됨.
     p.add_argument('--top_k', type=int, default=1) #top 몇개까지 출력할건지
@@ -34,121 +33,72 @@ def define_argparser():
     return config
 
 
-def read_text(top_n):
-    '''
-    Read text from standard input for inference.
-    '''
-    lines = []
-
-    # print('코멘트수 : '+str(top_n))
-    # file = ".\\data\\test.tsv"
-    file = config.test_file
-    data = open(file, mode='r')
-
-    # for i, line in enumerate(random.shuffle(data[0].split('\n'))):
-    for i, line in enumerate(data):
-        if line.strip() != '':
-            lines += [line.strip()]
-            if i >= int(top_n) - 1:
-                break
-
-    data.close()
-
-    # for line in sys.stdin:
-    #     if line.strip() != '':
-    #         lines += [line.strip()]
-    
-    return lines
-
-
-def main(config):
-    saved_data = torch.load(
+def main(config, p_data):
+    saved_data = torch.load( #저장된 모델을 불러옴
         config.model_fn,
-        map_location='cpu' if config.gpu_id < 0 else 'cuda:%d' % config.gpu_id
+        map_location='cpu' if config.gpu_id < 0 else 'cuda:%d' % config.gpu_id #gpu_id가 -1이면 cpu로, 아니면 gpu로
     )
 
     train_config = saved_data['config']
     bert_best = saved_data['bert']
     index_to_label = saved_data['classes']
 
-    lines = read_text(config.top_n)
-    
+    lines = p_data['sentence']
+
     return_data = {}
     return_data['prediction'] = []
 
-    prediction_data = {}
-
-    # return_lines = {}
-
     with torch.no_grad():
         # Declare model and load pre-trained weights.
-        tokenizer = BertTokenizerFast.from_pretrained(train_config.pretrained_model_name)
-        model_loader = AlbertForSequenceClassification if train_config.use_albert else BertForSequenceClassification
+        tokenizer = BertTokenizerFast.from_pretrained(train_config.pretrained_model_name) #tokenizer를 불러옴
+        model_loader = AlbertForSequenceClassification if train_config.use_albert else BertForSequenceClassification #albert를 쓸지 bert를 쓸지
         model = model_loader.from_pretrained(
             train_config.pretrained_model_name,
             num_labels=len(index_to_label)
-        )
-        model.load_state_dict(bert_best)
+        ) #모델을 불러옴
+        model.load_state_dict(bert_best) #모델에 가중치를 불러옴
 
         if config.gpu_id >= 0:
-            model.cuda(config.gpu_id)
-        device = next(model.parameters()).device
+            model.cuda(config.gpu_id) #gpu_id가 -1이면 cpu로, 아니면 gpu로
+        device = next(model.parameters()).device #모델의 device를 가져옴
 
         # Don't forget turn-on evaluation mode.
-        model.eval()
-
+        model.eval() #모델을 평가모드로 바꿈
         y_hats = []
-        # y_logits = []
-        for idx in range(0, len(lines), config.batch_size):
+
+        for idx in range(0, len(lines), config.batch_size): #batch_size만큼씩 끊어서 추론
             mini_batch = tokenizer(
-                lines[idx:idx + config.batch_size],
+                lines[idx:idx + config.batch_size], #batch_size만큼의 데이터를 가져옴
                 padding=True, #가장 긴것 기준으로 padding
                 truncation=True, #maxlength 기준으로 잘라줌
-                return_tensors="pt",
+                return_tensors="pt", #pytorch tensor로 변환
             )
 
             x = mini_batch['input_ids'] #word idx의 tensor가 나옴
-            x = x.to(device)
+            x = x.to(device) #device에 맞게 tensor를 옮김
             mask = mini_batch['attention_mask'] #padding이 된곳에는 attention이 되면 안됨
-            mask = mask.to(device)
+            mask = mask.to(device) #device에 맞게 tensor를 옮김
 
             # Take feed-forward
-            # y_logit = model(x, attention_mask=mask).logits
             y_hat = F.softmax(model(x, attention_mask=mask).logits, dim=-1) #.logits 는 softmax직전의 hidden state weght
-
-            # y_logits += [y_logit]
             y_hats += [y_hat]
-        # Concatenate the mini-batch wise result
-        # y_logits = torch.cat(y_logits, dim=0)
-        y_hats = torch.cat(y_hats, dim=0)
-        # |y_hats| = (len(lines), n_classes)
 
-        probs, indice = y_hats.cpu().topk(config.top_k)
-        # probs, indice2 = y_logits.cpu().topk(config.top_k)
-        # |indice| = (len(lines), top_k)
+        y_hats = torch.cat(y_hats, dim=0) #batch_size만큼의 tensor를 합쳐줌
+        probs, indice = y_hats.cpu().topk(config.top_k) #top_k개만큼의 확률과 label을 가져옴
 
+        return_data['PredictCnt'] = len(lines) #몇개의 데이터를 입력받았는지
         for i in range(len(lines)):
-            prediction_data['prob'] = str(format(probs[i].item(), '2f'))
-            prediction_data['label'] = [index_to_label[int(indice[i][j])] for j in range(config.top_k)],
-            prediction_data['sentence'] = lines[i]
-            return_data['prediction'].append(prediction_data)
+            prediction_data = {}
+            prediction_data['id'] = i,
+            prediction_data['prob'] = str(format(probs[i].item(), '2f')) #확률
+            prediction_data['label'] = [index_to_label[int(indice[i][j])] for j in range(config.top_k)], #label
+            prediction_data['sentence'] = lines[i] #입력받은 문장
+            return_data['prediction'].append(prediction_data) #리턴할 데이터에 추가
+            # sys.stdout.write('%s\n' % (prediction_data))
 
-            # return_lines.append('%s\t%s\t%s\n' % (
-            #     ' '.join([str(format(probs[i].item(), '2f'))]),
-            #     ' '.join([str(index_to_label[int(indice[i][j])]) for j in range(config.top_k)]),
-            #     str(lines[i])
-            #     )
-            # )
-            
-            # sys.stdout.write('%s\t%s\t%s\n' % (
-            #     ' '.join([str(format(probs[i].item(), '2f'))]), 
-            #     ' '.join([index_to_label[int(indice[i][j])] for j in range(config.top_k)]), 
-            #     lines[i]
-            # ))
-    sys.stdout.write(str(return_data))
-    return return_data
-    # return str("return_lines")
+    sys.stdout.write(str(return_data)) #리턴할 데이터를 출력
+    # return return_data
 
 if __name__ == '__main__':
-    config = define_argparser()
-    main(config)
+    config = define_argparser() #config를 가져옴
+    main(config, json.loads(input())) #input으로 들어온 데이터를 json으로 변환
