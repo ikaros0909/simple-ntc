@@ -3,10 +3,11 @@ from functools import wraps
 import jwt
 import subprocess
 import json
+from predict import main
 
 app = Flask(__name__)
 
-SECRET_KEY = "secret_key"
+SECRET_KEY = "JinhakSolutions#2023"
 
 # python index.py --port=80
 
@@ -67,7 +68,7 @@ def predict(decoded_token):
     data_string = json.dumps(data).encode('utf-8')
 
     # TODO: classify_plm.py 모델을 사용하여 예측을 수행하는 로직 구현
-    result = subprocess.run(['python', '.\predict.py', '--model_fn', '.\models\y.native.kcbert.pth', '--gpu_id', '0']
+    result = subprocess.run(['python', '.\predict.py', '--model_fn', '.\models\y.native.kcbert_20230228_1.pth', '--gpu_id', '0'] #gpu_id=0
         , input=data_string
         , stdout=subprocess.PIPE
         , stderr=subprocess.PIPE
@@ -75,8 +76,12 @@ def predict(decoded_token):
         # , text=True
         # , encoding='euc-kr'
     )
+
     # print(result.stderr)
     output = result.stdout.decode('euc-kr')
+
+    # output = main(json.dumps(data).encode('utf-8'))
+
     data = {"output": output}
     return json.dumps(data)
 
@@ -85,6 +90,7 @@ def predict(decoded_token):
 
     # result = {"prediction": 42}
     # return result
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='10.1.0.61', port=80)

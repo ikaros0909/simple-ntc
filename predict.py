@@ -33,7 +33,8 @@ def define_argparser():
     return config
 
 
-def main(config, p_data):
+def main(p_data):
+    config = define_argparser()
     saved_data = torch.load( #저장된 모델을 불러옴
         config.model_fn,
         map_location='cpu' if config.gpu_id < 0 else 'cuda:%d' % config.gpu_id #gpu_id가 -1이면 cpu로, 아니면 gpu로
@@ -47,6 +48,7 @@ def main(config, p_data):
 
     return_data = {}
     return_data['prediction'] = []
+    return_data['sentence'] = []
 
     with torch.no_grad():
         # Declare model and load pre-trained weights.
@@ -91,14 +93,18 @@ def main(config, p_data):
             prediction_data = {}
             prediction_data['id'] = i,
             prediction_data['prob'] = str(format(probs[i].item(), '2f')) #확률
-            prediction_data['label'] = [index_to_label[int(indice[i][j])] for j in range(config.top_k)], #label
+            prediction_data['label'] = [index_to_label[int(indice[i][j])] for j in range(config.top_k)][0], #label
             prediction_data['sentence'] = lines[i] #입력받은 문장
             return_data['prediction'].append(prediction_data) #리턴할 데이터에 추가
+
+            # sys.stdout.write('출력값 : %s\n' % prediction_data['label'][0])
+            if prediction_data['label'][0] == "인성":
+                return_data['sentence'].append(prediction_data['sentence'])
+
             # sys.stdout.write('%s\n' % (prediction_data))
 
     sys.stdout.write(str(return_data)) #리턴할 데이터를 출력
     # return return_data
 
 if __name__ == '__main__':
-    config = define_argparser() #config를 가져옴
-    main(config, json.loads(input())) #input으로 들어온 데이터를 json으로 변환
+    main(json.loads(input())) #input으로 들어온 데이터를 json으로 변환

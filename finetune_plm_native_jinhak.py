@@ -24,16 +24,16 @@ from simple_ntc.utils import read_text
 
 ### negative positive
 # training
-# python .\finetune_plm_native.py --model_fn ./models/review.native.kcbert_20230228.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train_edit.tsv --gpu_id 0,1 --pretrained_model_name 'beomi/kcbert-base'
+# python .\finetune_plm_native.py --model_fn ./models/review.native.kcbert.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train.tsv --gpu_id 0 --batch_size 80 --n_epochs 5 --pretrained_model_name 'beomi/kcbert-base'
 # test
-# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --test_file ./data/review.sorted.uniq.refined.shuf.test.tsv --gpu_id 0,1 --top_n=20
-# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --test_file .\data\y_test_h.tsv --gpu_id 0,1 --top_n=20
+# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --test_file ./data/review.sorted.uniq.refined.shuf.test.tsv --gpu_id 0 --top_n=20
+# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --test_file .\data\y_test_h.tsv --gpu_id 0 --top_n=20
 
 ### humanism
 # training
-# python .\finetune_plm_native.py --model_fn ./models/y.native.kcbert_20230228_1.pth --train_fn ./data/y_train_20230228.tsv --gpu_id 0 --pretrained_model_name 'beomi/kcbert-base'
+# python .\finetune_plm_native_jinhak.py --model_fn ./models/y.native.kcbert_20230228_1.pth --train_fn ./data/y_train_20230228.tsv --gpu_id 0 --batch_size 80 --n_epochs 5 --pretrained_model_name 'beomi/kcbert-base'
 # testing
-# python .\classify_plm.py --model_fn .\models\y.native.kcbert_20230228_2.pth --test_file .\data\y_test_20230228.tsv --gpu_id 0 --top_n=20
+# python .\classify_plm.py --model_fn .\models\y.native.kcbert_20230301_1.pth --test_file .\data\y_test_20230228_1.tsv --gpu_id 0 --top_n=3000
 
 def define_argparser():
     p = argparse.ArgumentParser()
@@ -52,15 +52,15 @@ def define_argparser():
     p.add_argument('--verbose', type=int, default=2) #숫자가 높을수록 자세히 보여줌
 
     p.add_argument('--batch_size', type=int, default=80) #2080ti기준 : batchsize 11기가 80=>64=>48=>32
-    p.add_argument('--n_epochs', type=int, default=5) #n_epochs=5 => 5번 돌림
+    p.add_argument('--n_epochs', type=int, default=5)
 
     p.add_argument('--lr', type=float, default=5e-5) #running rate
-    p.add_argument('--warmup_ratio', type=float, default=.2) #warmup_ratio=0.1 => 10%만큼 warmup / Adam만 쓰면 학습이 잘 안됨.Adam을 쓰면서 warmup하는 방법
-    p.add_argument('--adam_epsilon', type=float, default=1e-8) #adam_epsilon=1e-8 => 1e-8만큼 더해줌
+    p.add_argument('--warmup_ratio', type=float, default=.2) #Adam만 쓰면 학습이 잘 안됨.Adam을 쓰면서 warmup하는 방법, 
+    p.add_argument('--adam_epsilon', type=float, default=1e-8)
     # If you want to use RAdam, I recommend to use LR=1e-4.
     # Also, you can set warmup_ratio=0.
-    p.add_argument('--use_radam', action='store_true') #RAdam 쓰는 방법
-    p.add_argument('--valid_ratio', type=float, default=.2) #valid_ratio=0.2 => 20%만큼 valid
+    p.add_argument('--use_radam', action='store_true')
+    p.add_argument('--valid_ratio', type=float, default=.2)
 
     p.add_argument('--max_length', type=int, default=100) #max_length 늘리면 batchsize 줄여야함.
 
@@ -172,18 +172,9 @@ def main(config):
         n_total_iterations
     )
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    if config.gpu_id is not None and len(config.gpu_id) > 0:
-        if "," in config.gpu_id:
-            device_ids = list(map(int, config.gpu_id.split(",")))
-            model = nn.DataParallel(model, device_ids=device_ids)
-        else:
-            model.cuda(config.gpu_id)
-            crit.cuda(config.gpu_id)
-
-    model.to(device)
-    crit.to(device)
+    if config.gpu_id >= 0:
+        model.cuda(config.gpu_id)
+        crit.cuda(config.gpu_id)
 
     # Start train.
     trainer = Trainer(config)
@@ -199,10 +190,10 @@ def main(config):
     torch.save({
         'rnn': None,
         'cnn': None,
-        'bert': model.state_dict(), #model.state_dict() => model의 weight를 저장
+        'bert': model.state_dict(),
         'config': config,
         'vocab': None,
-        'classes': index_to_label, #index_to_label => label을 저장
+        'classes': index_to_label,
         'tokenizer': tokenizer,
     }, config.model_fn)
 

@@ -2,6 +2,7 @@ import sys
 import argparse
 import random
 from sympy import li
+import csv
 
 import torch
 import torch.nn as nn
@@ -119,12 +120,21 @@ def main(config):
         # probs, indice2 = y_logits.cpu().topk(config.top_k)
         # |indice| = (len(lines), top_k)
 
-        for i in range(len(lines)):
-            sys.stdout.write('%s\t%s\t%s\n' % (
-                ' '.join([str(format(probs[i].item(), '2f'))]), 
-                ' '.join([index_to_label[int(indice[i][j])] for j in range(config.top_k)]), 
-                lines[i]
-            ))
+        with open('data/result_20230228_all.csv', 'w', newline='') as f:
+            writer = csv.writer(f, delimiter='\t')
+            writer.writerow(['prob', 'label', 'text'])
+            for i in range(len(lines)):
+                writer.writerow([
+                    ' '.join([str(format(probs[i].item(), '2f'))]), 
+                    ' '.join([index_to_label[int(indice[i][j])] for j in range(config.top_k)]), 
+                    lines[i]])
+                
+        # for i in range(len(lines)):
+        #     sys.stdout.write('%s\t%s\t%s\n' % (
+        #         ' '.join([str(format(probs[i].item(), '2f'))]), 
+        #         ' '.join([index_to_label[int(indice[i][j])] for j in range(config.top_k)]), 
+        #         lines[i]
+        #     ))
 
 
 if __name__ == '__main__':
