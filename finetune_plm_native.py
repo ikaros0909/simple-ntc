@@ -24,14 +24,14 @@ from simple_ntc.utils import read_text
 
 ### negative positive
 # training
-# python .\finetune_plm_native.py --model_fn ./models/review.native.kcbert_20230228.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train_edit.tsv --gpu_id 0,1 --pretrained_model_name 'beomi/kcbert-base'
+# python .\finetune_plm_native.py --model_fn ./models/review.native.kcbert_20230317.pth --train_fn ./data/review.sorted.uniq.refined.shuf.train_edit.tsv --gpu_id 0 --pretrained_model_name 'beomi/kcbert-base'
 # test
-# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --test_file ./data/review.sorted.uniq.refined.shuf.test.tsv --gpu_id 0,1 --top_n=20
+# python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --test_file ./data/review.sorted.uniq.refined.shuf.test.tsv --gpu_id 0 --top_n=20
 # python .\classify_plm.py --model_fn .\models\review.native.kcbert.pth --test_file .\data\y_test_h.tsv --gpu_id 0,1 --top_n=20
 
 ### humanism
 # training
-# python .\finetune_plm_native.py --model_fn ./models/y.native.kcbert_20230228_1.pth --train_fn ./data/y_train_20230228.tsv --gpu_id 0 --pretrained_model_name 'beomi/kcbert-base'
+# python .\finetune_plm_native.py --model_fn ./models/y.native.kcbert_20230317.pth --train_fn ./data/y_train_20230317.tsv --gpu_id 0 --pretrained_model_name 'beomi/kcbert-base'
 # testing
 # python .\classify_plm.py --model_fn .\models\y.native.kcbert_20230228_2.pth --test_file .\data\y_test_20230228.tsv --gpu_id 0 --top_n=20
 

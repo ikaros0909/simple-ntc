@@ -24,6 +24,7 @@ def define_argparser():
 
     p.add_argument('--model_fn', required=True) #저장이 되어있는 모델파일
     p.add_argument('--test_file', required=True) #test 파일.
+    p.add_argument('--save_file', required=True) #test 파일.
     p.add_argument('--gpu_id', type=int, default=-1)
     p.add_argument('--batch_size', type=int, default=256) #추론을 위한 batch size는 좀더 커도됨.
     p.add_argument('--top_k', type=int, default=1) #top 몇개까지 출력할건지
@@ -120,7 +121,7 @@ def main(config):
         # probs, indice2 = y_logits.cpu().topk(config.top_k)
         # |indice| = (len(lines), top_k)
 
-        with open('data/result_20230228_all.csv', 'w', newline='') as f:
+        with open(config.save_file, 'w', newline='') as f:
             writer = csv.writer(f, delimiter='\t')
             writer.writerow(['prob', 'label', 'text'])
             for i in range(len(lines)):
